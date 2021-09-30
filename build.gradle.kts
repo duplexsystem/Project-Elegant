@@ -17,7 +17,7 @@ plugins {
 
 group = "io.github.duplexsystem.${rootProject.name}"
 version = "1.0-SNAPSHOT"
-val mainClassName = "${group}.Main"
+val mainClassName = "Main"
 
 tasks.withType<Jar> {
     manifest {

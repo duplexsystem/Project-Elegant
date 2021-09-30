@@ -1,5 +1,3 @@
-package io.github.duplexsystem.projectelegant
-
 class Main {
     companion object {
         @JvmStatic
