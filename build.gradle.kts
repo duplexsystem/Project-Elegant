@@ -93,10 +93,12 @@ tasks.register<proguard.gradle.ProGuardTask>("proguard") {
 
     repackageclasses("")
 
+    overloadaggressively()
+
     printmapping("build/libs/proguard-mapping.txt")
 
-    keep("""class $mainClassName {
-            public static void main(String[]);
+    keep("""public class $mainClassName {
+            public static void main(java.lang.String[]);
     }
     """)
 }
