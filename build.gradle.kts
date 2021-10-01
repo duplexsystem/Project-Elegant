@@ -31,8 +31,16 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    shadow("io.arrow-kt:arrow-fx-coroutines:${project.extra["arrow_version"]}")
-    shadow("io.arrow-kt:arrow-fx-stm:${project.extra["arrow_version"]}")
+
+    implementation("io.arrow-kt:arrow-fx-coroutines:${project.extra["arrow_version"]}")
+    implementation("io.arrow-kt:arrow-fx-stm:${project.extra["arrow_version"]}")
+
+    implementation("io.helidon.webserver:helidon-webserver:${project.extra["helidon_version"]}")
+
+    testImplementation("io.helidon.webclient:helidon-webclient:${project.extra["helidon_version"]}")
+
+    implementation("org.apache.logging.log4j:log4j-core:${project.extra["log4j_version"]}")
+    implementation("org.apache.logging.log4j:log4j-api:${project.extra["log4j_version"]}")
 }
 
 tasks.test {
@@ -69,6 +77,7 @@ tasks {
         dependsOn("proguard")
     }
     shadowJar {
+        mergeServiceFiles()
         exclude("**/*.kotlin_metadata", "**/*.kotlin_metadata", "**/*.kotlin_module", "**/*.kotlin_builtins", "**/module-info.class", "META-INF/maven/**")
     }
 }
@@ -84,7 +93,7 @@ tasks.register<proguard.gradle.ProGuardTask>("proguard") {
     libraryjars(
         mapOf("jarfilter" to "!**.jar",
             "filter"    to "!module-info.class"),
-        "$javaHome/jmods/java.base.jmod"
+        fileTree("$javaHome/jmods").filter { it.isFile() }.files
     )
 
     allowaccessmodification()
@@ -94,6 +103,8 @@ tasks.register<proguard.gradle.ProGuardTask>("proguard") {
     repackageclasses("")
 
     overloadaggressively()
+
+    dontwarn()
 
     printmapping("build/libs/proguard-mapping.txt")
 
