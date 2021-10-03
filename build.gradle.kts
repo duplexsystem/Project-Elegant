@@ -13,11 +13,12 @@ buildscript {
 plugins {
     kotlin("jvm") version ("1.5.31")
     id("com.github.johnrengelman.shadow") version ("7.0.0")
+    id("org.graalvm.buildtools.native") version ("0.9.4")
 }
 
 group = "io.github.duplexsystem.${rootProject.name}"
 version = "1.0-SNAPSHOT"
-val mainClassName = "Main"
+val mainClassName = "$group.Main"
 
 tasks.withType<Jar> {
     manifest {
@@ -39,8 +40,8 @@ dependencies {
 
     testImplementation("io.helidon.webclient:helidon-webclient:${project.extra["helidon_version"]}")
 
-    implementation("org.apache.logging.log4j:log4j-core:${project.extra["log4j_version"]}")
-    implementation("org.apache.logging.log4j:log4j-api:${project.extra["log4j_version"]}")
+    implementation("org.slf4j:log4j-over-slf4j:1.7.32")
+
 }
 
 tasks.test {
@@ -74,7 +75,7 @@ tasks.withType<Test>().configureEach {
 
 tasks {
     build {
-        dependsOn("proguard")
+        dependsOn("upx")
     }
     shadowJar {
         mergeServiceFiles()
@@ -112,4 +113,44 @@ tasks.register<proguard.gradle.ProGuardTask>("proguard") {
             public static void main(java.lang.String[]);
     }
     """)
+
+    keep("""class io.helidon.** {
+            public protected private *;
+    }
+    """)
+
+    keep("""class io.netty.** {
+            public protected private *;
+    }
+    """)
+
+    dontobfuscate()
+}
+
+nativeBuild {
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(16))
+    })
+
+    imageName.set(rootProject.name)
+
+    mainClass.set(mainClassName)
+
+    buildArgs.add("--gc=G1")
+    buildArgs.add("--language:js")
+
+    agent.set(true)
+
+    useFatJar.set(false)
+}
+
+tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeBuild") {
+    dependsOn("proguard")
+    classpathJar.set(file("build/libs/${rootProject.name}-${version}-all-proguard-obfuscated.jar"))
+}
+
+
+tasks.register<Exec>("upx") {
+    dependsOn(tasks.named("nativeBuild"))
+    commandLine("upx", "-9", "build/native/nativeBuild/${rootProject.name}")
 }

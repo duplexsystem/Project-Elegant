@@ -44,7 +44,7 @@ internal class ConcurrentJsExecutor(private val jsCode: String) {
                             if ((requestId as Int) < 42) {
                                 return@Supplier onReject!!.execute("$requestId is not a valid request id!")
                             }
-                            val v = requestId as Int + Math.random()
+                            val v = requestId + Math.random()
                             return@Supplier onResolve!!.execute(v)
                         } catch (e: PolyglotException) {
                             return@Supplier onReject!!.execute(if (e.guestObject == null) e.guestObject else e.message)
