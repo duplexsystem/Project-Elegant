@@ -19,6 +19,7 @@ plugins {
 group = "io.github.duplexsystem.${rootProject.name}"
 version = "1.0-SNAPSHOT"
 val mainClassName = "$group.Main"
+var needsUpx = false;
 
 tasks.withType<Jar> {
     manifest {
@@ -88,7 +89,7 @@ tasks.register<proguard.gradle.ProGuardTask>("proguard") {
 
     injars(tasks.named("shadowJar"))
 
-    outjars("build/libs/${rootProject.name}-${version}-all-proguard-obfuscated.jar")
+    outjars("build/libs/${rootProject.name}-${version}-all-proguard.jar")
 
     val javaHome = System.getProperty("java.home")
     libraryjars(
@@ -147,10 +148,19 @@ nativeBuild {
 tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeBuild") {
     dependsOn("proguard")
     classpathJar.set(file("build/libs/${rootProject.name}-${version}-all-proguard-obfuscated.jar"))
+    doLast {
+        needsUpx = true
+    }
 }
 
 
 tasks.register<Exec>("upx") {
+    outputs.upToDateWhen {
+        !needsUpx
+    }
     dependsOn(tasks.named("nativeBuild"))
     commandLine("upx", "-9", "build/native/nativeBuild/${rootProject.name}")
+    doLast {
+        needsUpx = false
+    }
 }
